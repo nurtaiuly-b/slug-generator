@@ -30,7 +30,7 @@ class TestService(unittest.TestCase):
 
     def test_slug_english(self):
         q = urllib.parse.quote("Hello World!")
-        self.assertEqual(self.get(f"/slug?text={q}"), (200, "wrong-answer-expected"))
+        self.assertEqual(self.get(f"/slug?text={q}"), (200, "hello-world"))
 
     def test_slug_cyrillic(self):
         q = urllib.parse.quote("Актау Город")
