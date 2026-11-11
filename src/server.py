@@ -15,6 +15,9 @@ TRANSLIT = {
 }
 
 
+GREETING = os.environ.get("GREETING", "hello")
+
+
 def slugify(text):
     text = text.lower()
     text = "".join(TRANSLIT.get(ch, ch) for ch in text)
@@ -28,7 +31,7 @@ class Handler(BaseHTTPRequestHandler):
         if url.path == "/healthz":
             self._send(200, "ok")
         elif url.path == "/":
-            self._send(200, "slug generator")
+            self._send(200, f"{GREETING} from slug generator")
         elif url.path == "/slug":
             text = parse_qs(url.query).get("text", [""])[0]
             if not text.strip():
