@@ -1,0 +1,51 @@
+name: Ansible
+
+on:
+  push:
+    branches: [main]
+    paths: ["ansible/**", ".github/workflows/ansible.yml"]
+  pull_request:
+    paths: ["ansible/**", ".github/workflows/ansible.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  twice:
+    name: Run the playbook twice
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+
+      - name: Install ansible-core, pinned
+        run: python -m pip install ansible-core==2.21.4
+
+      - name: Syntax check
+        run: ansible-playbook -i ansible/inventory.ini ansible/site.yml --syntax-check
+
+      - name: First run - things change
+        run: ansible-playbook -i ansible/inventory.ini ansible/site.yml
+
+      - name: Second run - nothing may change
+        run: |
+          ansible-playbook -i ansible/inventory.ini ansible/site.yml | tee second-run.txt
+          if ! grep -Eq ': ok=[1-9][0-9]* +changed=0 +unreachable=0 +failed=0' second-run.txt; then
+            echo "::error::The second run changed something, or matched no hosts. Run twice, change nothing."
+            exit 1
+          fi
